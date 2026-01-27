@@ -1,0 +1,81 @@
+name: 'Canary Dependency Scan'
+description: 'Parse lockfiles and submit dependency inventory to Canary Worker for vulnerability scanning'
+author: 'Canary'
+
+inputs:
+  worker_url:
+    description: 'Canary Worker URL (e.g., https://canary.your-domain.workers.dev)'
+    required: true
+  auth_token:
+    description: 'Authentication token for Canary Worker API'
+    required: true
+  project_id:
+    description: 'Project identifier for grouping scans'
+    required: true
+  include_dev:
+    description: 'Include development dependencies in scan'
+    required: false
+    default: 'true'
+  working_directory:
+    description: 'Directory to scan for lockfiles (defaults to repository root)'
+    required: false
+    default: '.'
+  fail_on_error:
+    description: 'Fail the job if submission to Worker fails'
+    required: false
+    default: 'true'
+
+outputs:
+  packages_count:
+    description: 'Number of packages discovered'
+    value: ${{ steps.submit.outputs.packages_count }}
+  status:
+    description: 'Submission status (success/failed/partial)'
+    value: ${{ steps.submit.outputs.status }}
+  lockfiles_found:
+    description: 'List of lockfiles discovered'
+    value: ${{ steps.discover.outputs.lockfiles }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Discover lockfiles
+      id: discover
+      shell: bash
+      run: |
+        chmod +x ${{ github.action_path }}/scripts/discover.sh
+        ${{ github.action_path }}/scripts/discover.sh "${{ inputs.working_directory }}"
+      env:
+        GITHUB_ACTION_PATH: ${{ github.action_path }}
+
+    - name: Parse lockfiles
+      id: parse
+      shell: bash
+      run: |
+        node ${{ github.action_path }}/scripts/parse-all.js
+      env:
+        WORKING_DIR: ${{ inputs.working_directory }}
+        INCLUDE_DEV: ${{ inputs.include_dev }}
+        LOCKFILES: ${{ steps.discover.outputs.lockfiles }}
+        PROJECT_ID: ${{ inputs.project_id }}
+
+    - name: Submit to Worker
+      id: submit
+      shell: bash
+      run: |
+        chmod +x ${{ github.action_path }}/scripts/submit.sh
+        ${{ github.action_path }}/scripts/submit.sh
+      env:
+        WORKER_URL: ${{ inputs.worker_url }}
+        AUTH_TOKEN: ${{ inputs.auth_token }}
+        FAIL_ON_ERROR: ${{ inputs.fail_on_error }}
+        INVENTORY_PATH: ${{ steps.parse.outputs.inventory_path }}
+
+branding:
+  icon: 'shield'
+  color: 'yellow'
