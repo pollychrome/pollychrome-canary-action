@@ -1,6 +1,8 @@
 #!/bin/bash
 # Discover lockfiles in the repository
-# Supports: package-lock.json, requirements.txt, poetry.lock
+# Supports: package-lock.json, requirements.txt, poetry.lock,
+# go.sum, go.mod, Gemfile.lock, Cargo.lock, composer.lock,
+# packages.lock.json, pom.xml
 
 set -e
 
@@ -28,6 +30,48 @@ while IFS= read -r -d '' file; do
     echo "Found Poetry lockfile: $file"
     LOCKFILES+=("poetry:$file")
 done < <(find "$WORKING_DIR" -name "poetry.lock" -type f -print0 2>/dev/null || true)
+
+# Find go.sum files
+while IFS= read -r -d '' file; do
+    echo "Found Go sum: $file"
+    LOCKFILES+=("go:$file")
+done < <(find "$WORKING_DIR" -name "go.sum" -type f -not -path "*/vendor/*" -print0 2>/dev/null || true)
+
+# Find go.mod files
+while IFS= read -r -d '' file; do
+    echo "Found Go module: $file"
+    LOCKFILES+=("go:$file")
+done < <(find "$WORKING_DIR" -name "go.mod" -type f -not -path "*/vendor/*" -print0 2>/dev/null || true)
+
+# Find Gemfile.lock files
+while IFS= read -r -d '' file; do
+    echo "Found RubyGems lockfile: $file"
+    LOCKFILES+=("rubygems:$file")
+done < <(find "$WORKING_DIR" -name "Gemfile.lock" -type f -print0 2>/dev/null || true)
+
+# Find Cargo.lock files
+while IFS= read -r -d '' file; do
+    echo "Found Cargo lockfile: $file"
+    LOCKFILES+=("cargo:$file")
+done < <(find "$WORKING_DIR" -name "Cargo.lock" -type f -not -path "*/target/*" -print0 2>/dev/null || true)
+
+# Find composer.lock files
+while IFS= read -r -d '' file; do
+    echo "Found Composer lockfile: $file"
+    LOCKFILES+=("composer:$file")
+done < <(find "$WORKING_DIR" -name "composer.lock" -type f -not -path "*/vendor/*" -print0 2>/dev/null || true)
+
+# Find NuGet packages.lock.json files
+while IFS= read -r -d '' file; do
+    echo "Found NuGet lockfile: $file"
+    LOCKFILES+=("nuget:$file")
+done < <(find "$WORKING_DIR" -name "packages.lock.json" -type f -not -path "*/obj/*" -print0 2>/dev/null || true)
+
+# Find Maven pom.xml files
+while IFS= read -r -d '' file; do
+    echo "Found Maven pom: $file"
+    LOCKFILES+=("maven:$file")
+done < <(find "$WORKING_DIR" -name "pom.xml" -type f -not -path "*/target/*" -print0 2>/dev/null || true)
 
 # Output results
 if [ ${#LOCKFILES[@]} -eq 0 ]; then

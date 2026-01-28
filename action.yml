@@ -1,5 +1,5 @@
 name: 'Canary Dependency Scan'
-description: 'Parse lockfiles and submit dependency inventory to Canary Worker for vulnerability scanning'
+description: 'Parse lockfiles (npm, PyPI, Go, Maven, RubyGems, NuGet, Cargo, Composer) and submit dependency inventory to Canary Worker'
 author: 'Canary'
 
 inputs:

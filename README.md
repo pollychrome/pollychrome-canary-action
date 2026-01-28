@@ -7,8 +7,13 @@ A GitHub Action that parses dependency lockfiles and submits inventory to a [Can
 | Ecosystem | File |
 |-----------|------|
 | npm | `package-lock.json` (v1, v2, v3) |
-| pip | `requirements.txt` |
-| Poetry | `poetry.lock` |
+| PyPI | `requirements.txt`, `poetry.lock` |
+| Go | `go.sum`, `go.mod` |
+| RubyGems | `Gemfile.lock` |
+| Cargo | `Cargo.lock` |
+| Composer | `composer.lock` |
+| NuGet | `packages.lock.json` |
+| Maven | `pom.xml` |
 
 ## Quick Start
 
@@ -40,7 +45,7 @@ jobs:
 The easiest way to set up Canary scanning is with the CLI:
 
 ```bash
-npx canary-setup
+npx canary-cli
 ```
 
 This will register your project, write the workflow file, and set GitHub secrets automatically.
